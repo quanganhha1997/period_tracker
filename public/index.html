@@ -1,0 +1,249 @@
+<!-- public/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Period Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #fce4ec;
+      text-align: center;
+      padding: 20px;
+    }
+    #app {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .menu-bar {
+      display: flex;
+      justify-content: space-around;
+      background: #e91e63;
+      padding: 10px;
+      border-radius: 5px;
+      color: white;
+      margin-bottom: 10px;
+    }
+    .menu-bar button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    .menu-bar button:hover {
+      text-decoration: underline;
+    }
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      margin-top: 10px;
+    }
+    .calendar div {
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .period-day { background: #ffcccc; }
+    .ovulation-day { background: #ccccff; }
+    .fertility-day { background: #ccffcc; }
+    section { display: none; }
+    section.active { display: block; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Period Tracker</h1>
+    
+    <!-- Login Section -->
+    <div id="login-section">
+      <label for="role">Select Role:</label>
+      <select id="role">
+        <option value="user">User</option>
+        <option value="partner">Partner</option>
+        <option value="doctor">Doctor</option>
+      </select>
+      <button onclick="login()">Login</button>
+    </div>
+    
+    <!-- Navigation Menu -->
+    <div class="menu-bar" id="menu" style="display:none;">
+      <button onclick="showSection('tracker')">Home</button>
+      <button onclick="showSection('permissions')">Settings</button>
+      <button onclick="showSection('logs')">Logs</button>
+      <button onclick="logout()">Logout</button>
+    </div>
+    
+    <!-- Home / Tracker Section -->
+    <section id="tracker">
+      <h2>Your Period Calendar</h2>
+      <input type="date" id="periodDate">
+      <button onclick="logPeriod()">Log Period</button>
+      <div class="calendar" id="calendar"></div>
+    </section>
+    
+    <!-- Settings / Permissions Section (only available to user) -->
+    <section id="permissions">
+      <h2>Manage Access</h2>
+      <label>
+        <input type="checkbox" id="partnerPermission">
+        Allow Partner to view logs
+      </label><br>
+      <label>
+        Doctor Access Expires at:
+        <input type="datetime-local" id="doctorAccessUntil">
+      </label><br>
+      <button onclick="updatePermissions()">Update Permissions</button>
+    </section>
+    
+    <!-- Logs Section -->
+    <section id="logs">
+      <h2>Logs</h2>
+      <ul id="logsList"></ul>
+    </section>
+  </div>
+  
+  <script>
+    async function login() {
+      const role = document.getElementById("role").value;
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ role })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById("login-section").style.display = "none";
+        document.getElementById("menu").style.display = "block";
+        showSection("tracker");
+        alert("Logged in as " + role);
+      }
+    }
+    
+    async function logout() {
+      const res = await fetch("/api/logout", { method: "POST" });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById("login-section").style.display = "block";
+        document.getElementById("menu").style.display = "none";
+        hideAllSections();
+        alert("Logged out");
+      }
+    }
+    
+    function showSection(sectionId) {
+      hideAllSections();
+      document.getElementById(sectionId).classList.add("active");
+      if (sectionId === "logs") {
+        fetchLogs();
+      }
+      if (sectionId === "tracker") {
+        updateCalendar();
+      }
+    }
+    
+    function hideAllSections() {
+      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
+    }
+    
+    async function logPeriod() {
+      const date = document.getElementById("periodDate").value;
+      if (!date) {
+        alert("Please select a date");
+        return;
+      }
+      const res = await fetch("/api/periods", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ date })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Period logged");
+        updateCalendar();
+      } else {
+        alert(data.error);
+      }
+    }
+    
+    async function updatePermissions() {
+      const partnerPermission = document.getElementById("partnerPermission").checked;
+      const doctorAccessUntil = document.getElementById("doctorAccessUntil").value;
+      const res = await fetch("/api/permissions", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({ partnerPermission, doctorAccessUntil })
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert("Permissions updated");
+      } else {
+        alert(data.error);
+      }
+    }
+    
+    async function fetchLogs() {
+      const res = await fetch("/api/periods");
+      const data = await res.json();
+      const logsList = document.getElementById("logsList");
+      logsList.innerHTML = "";
+      if (data.logs) {
+        data.logs.forEach(log => {
+          const li = document.createElement("li");
+          li.textContent = "Period logged on: " + log.date;
+          logsList.appendChild(li);
+        });
+      } else {
+        logsList.textContent = "No logs available";
+      }
+    }
+    
+    async function updateCalendar() {
+      const res = await fetch("/api/periods");
+      const data = await res.json();
+      const calendarDiv = document.getElementById("calendar");
+      calendarDiv.innerHTML = "";
+      const today = new Date();
+      const currentYear = today.getFullYear();
+      const currentMonth = today.getMonth();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      
+      // Create a grid of days for the current month
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dayDiv = document.createElement("div");
+        dayDiv.textContent = day;
+        
+        if (data.logs) {
+          data.logs.forEach(log => {
+            const logDate = new Date(log.date);
+            // Highlight period day
+            if (date.toDateString() === logDate.toDateString()) {
+              dayDiv.classList.add("period-day");
+            }
+            // Ovulation day: 14 days after the period start
+            const ovulation = new Date(logDate);
+            ovulation.setDate(ovulation.getDate() + 14);
+            if (date.toDateString() === ovulation.toDateString()) {
+              dayDiv.classList.add("ovulation-day");
+            }
+            // Fertility window: from logDate+10 to logDate+16
+            const fertilityStart = new Date(logDate);
+            fertilityStart.setDate(fertilityStart.getDate() + 10);
+            const fertilityEnd = new Date(logDate);
+            fertilityEnd.setDate(fertilityEnd.getDate() + 16);
+            if (date >= fertilityStart && date <= fertilityEnd) {
+              dayDiv.classList.add("fertility-day");
+            }
+          });
+        }
+        calendarDiv.appendChild(dayDiv);
+      }
+    }
+  </script>
+</body>
+</html>
