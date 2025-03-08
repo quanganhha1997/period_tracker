@@ -142,10 +142,52 @@
     background: #ffcdd2;
     transition: 0.3s ease-in-out;
 }
+/* Legend Container */
+.legend-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 15px;
+    background: white;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
 
+/* Legend Items */
+.legend-item {
+    display: flex;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Legend Color Box */
+.legend-color {
+    width: 20px;
+    height: 20px;
+    display: inline-block;
+    border-radius: 5px;
+    margin-right: 8px;
+}
+
+/* Match Calendar Colors */
+.period-day {
+    background-color: #ffcccc;
+}
+
+.ovulation-day {
+    background-color: #ccccff;
+}
+
+.fertility-day {
+    background-color: #ccffcc;
+}
   </style>
 </head>
 <body>
+  <h2 id="loggedInUser" style="display: none;"></h2>
   <div id="app">
     <h1>Period Tracker</h1>
     
@@ -188,7 +230,18 @@
       </div>
       <div class="calendar" id="calendar"></div>
     </section>
-    
+    <!-- Legend Section -->
+<div id="legend" class="legend-container">
+  <div class="legend-item">
+      <span class="legend-color period-day"></span> Period Days
+  </div>
+  <!-- <div class="legend-item">
+      <span class="legend-color ovulation-day"></span> Ovulation Day
+  </div> -->
+  <div class="legend-item">
+      <span class="legend-color fertility-day"></span> Fertile Window
+  </div>
+</div>
     <!-- Settings / Permissions Section (only available to user) -->
     <section id="permissions">
       <h2>Manage Access</h2>
@@ -216,10 +269,10 @@
     let currentDate = new Date();
     let currentYear = currentDate.getFullYear();
     let currentMonth = currentDate.getMonth(); // 0-indexed
-    window.onload = function() {
-    localStorage.clear(); // Clears all stored items in localStorage
-    console.log("LocalStorage cleared on app start.");
-};
+    function clearOnLogout() {
+      localStorage.clear();
+      console.log("LocalStorage cleared.");
+    }
 ///////////////////////////////////
 // Function to display patients if the user is a doctor
 // Function to display patients for doctors and admins
@@ -256,23 +309,34 @@ function displayPatientsForDoctor() {
         document.getElementById("patients-section").style.display = "none";
     }
 }
-// // Function to watch for `currentUser` changes in `localStorage`
-// function watchLocalStorageChange() {
-//     setInterval(() => {
-//         const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-//         if (currentUser) {
-//             displayPatientsForDoctor();
-//         }
-//     }, 1000); // Check every second (adjust as needed)
-// }
+// Function to watch for `currentUser` changes in `localStorage`
+function watchLocalStorageChange() {
+    setInterval(() => {
+        const currentUser = JSON.parse(localStorage.getItem("currentUser"));
+        if (currentUser) {
+            displayPatientsForDoctor();
+        }
+    }, 1000); // Check every second (adjust as needed)
+}
 
-// // Start watching `localStorage` for changes
-// watchLocalStorageChange();
+// Start watching `localStorage` for changes
+watchLocalStorageChange();
 
-
+document.addEventListener("DOMContentLoaded", () => {
+    displayLegendIfNeeded();
+});
 
 //////////////////////////////////
+function displayLoggedInUser() {
+    const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
+    if (currentUser && currentUser.role) { 
+        document.getElementById("loggedInUser").textContent = `Welcome, ${currentUser.role}!`;
+        document.getElementById("loggedInUser").style.display = "block";
+    } else {
+        document.getElementById("loggedInUser").style.display = "none";
+    }
+}
 
     // Fetch users from the database and log them to the console
     fetch("/api/users")
@@ -283,12 +347,18 @@ function displayPatientsForDoctor() {
       });
 
     // Fetch patients from the database and log them to the console
-      fetch("/api/patients")
-      .then(response => response.json())
-      .then(data => {
+    fetch("/api/patients")
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
         localStorage.setItem("patients", JSON.stringify(data));
-       console.log("patients", data);
-      });
+        console.log("Patients fetched:", data);
+    })
+    .catch(error => console.error("Error fetching patients:", error));
 
     // Show/hide password field based on selected role.
     document.getElementById("role").addEventListener("change", function() {
@@ -298,7 +368,21 @@ function displayPatientsForDoctor() {
         document.getElementById("passwordField").style.display = "none";
       }
     });
-    
+    function displayLegendIfNeeded() {
+    const currentUser = localStorage.getItem("currentUser");
+    console.log("currentUser LOCAL STORAGE", currentUser);
+    if (currentUser) {
+        const user = JSON.parse(currentUser);
+        if (user.role === "user" || user.role === "partner"|| user.role === "admin") {
+            document.getElementById("legend").style.display = "flex"; // Show for users only
+        } else {
+            document.getElementById("legend").style.display = "none"; // Hide for other roles
+        }
+    } else {
+        document.getElementById("legend").style.display = "none"; // Hide if no user is logged in
+    }
+}
+
     async function login() {
     const role = document.getElementById("role").value;
     const payload = { role };
@@ -350,7 +434,9 @@ function displayPatientsForDoctor() {
                 document.getElementById("settingsBtn").style.display = "none";
             }
         }
+        displayLegendIfNeeded() 
 
+        displayLoggedInUser(); // Show the logged-in user's name
         showSection("tracker");
         alert("Logged in as " + role);
     } else {
@@ -370,6 +456,8 @@ function displayPatientsForDoctor() {
     document.getElementById("app").style.display = "block";  // Show the main app again
     document.getElementById("menu").style.display = "none";  // Hide menu
     document.getElementById("login-section").style.display = "block"; // Show login
+    document.getElementById("legend").style.display = "none"; // Hide the legend on logout
+    document.getElementById("loggedInUser").style.display = "none"; // Hide username
 
     // Ensure all sections are hidden
     hideAllSections();
@@ -429,63 +517,74 @@ function displayPatientsForDoctor() {
         alert(data.error);
       }
     }
-    
-    async function fetchLogs() {
-      const res = await fetch("/api/periods");
-      const data = await res.json();
-      const logsList = document.getElementById("logsList");
-      logsList.innerHTML = "";
-      if (data.logs) {
+   async function fetchLogs() {
+    const res = await fetch("/api/periods");
+    const data = await res.json();
+
+    const logsList = document.getElementById("logsList");
+    logsList.innerHTML = "";
+
+    if (data.logs) {
         data.logs.forEach(log => {
-          const li = document.createElement("li");
-          li.textContent = "Period logged on: " + log.date + " ";
-          if (currentUser && currentUser.role === "user") {
-            const editBtn = document.createElement("button");
-            editBtn.textContent = "Edit";
-            editBtn.onclick = async () => {
-              const newDate = prompt("Enter new date (YYYY-MM-DD):", log.date);
-              if (newDate) {
-                const res = await fetch(`/api/periods/${log.id}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ date: newDate })
-                });
-                const result = await res.json();
-                if (result.success) {
-                  alert("Log updated");
-                  fetchLogs();
-                  updateCalendar();
-                } else {
-                  alert(result.error);
-                }
-              }
-            };
-            li.appendChild(editBtn);
-            const deleteBtn = document.createElement("button");
-            deleteBtn.textContent = "Delete";
-            deleteBtn.onclick = async () => {
-              if (confirm("Are you sure you want to delete this log?")) {
-                const res = await fetch(`/api/periods/${log.id}`, {
-                  method: "DELETE"
-                });
-                const result = await res.json();
-                if (result.success) {
-                  alert("Log deleted");
-                  fetchLogs();
-                  updateCalendar();
-                } else {
-                  alert(result.error);
-                }
-              }
-            };
-            li.appendChild(deleteBtn);
-          }
-          logsList.appendChild(li);
+            const li = document.createElement("li");
+            li.textContent = "Period logged on: " + log.date + " ";
+
+            // Ensure the partner can also see logs if permission is granted
+            if (currentUser && (currentUser.role === "user" || (currentUser.role === "partner" && currentUser.user.partnerPermission))) {
+                updateCalendarWithLog(log);
+            }
+
+            if (currentUser && currentUser.role === "user") {
+                const editBtn = document.createElement("button");
+                editBtn.textContent = "Edit";
+                editBtn.onclick = async () => {
+                    const newDate = prompt("Enter new date (YYYY-MM-DD):", log.date);
+                    if (newDate) {
+                        const res = await fetch(`/api/periods/${log.id}`, {
+                            method: "PUT",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ date: newDate })
+                        });
+                        const result = await res.json();
+                        if (result.success) {
+                            alert("Log updated");
+                            fetchLogs();
+                            updateCalendar();
+                        } else {
+                            alert(result.error);
+                        }
+                    }
+                };
+                li.appendChild(editBtn);
+
+                const deleteBtn = document.createElement("button");
+                deleteBtn.textContent = "Delete";
+                deleteBtn.onclick = async () => {
+                    if (confirm("Are you sure you want to delete this log?")) {
+                        const res = await fetch(`/api/periods/${log.id}`, {
+                            method: "DELETE"
+                        });
+                        const result = await res.json();
+                        if (result.success) {
+                            alert("Log deleted");
+                            fetchLogs();
+                            updateCalendar();
+                        } else {
+                            alert(result.error);
+                        }
+                    }
+                };
+                li.appendChild(deleteBtn);
+            }
+
+            logsList.appendChild(li);
         });
-      } else {
+    } else {
         logsList.textContent = "No logs available";
-      }
     }
+}
+
+
     
     async function updateCalendar() {
       const calendarDiv = document.getElementById("calendar");
