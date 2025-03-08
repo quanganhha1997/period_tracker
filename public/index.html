@@ -2,6 +2,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <div id="patients-section" style="display: none;">
+    <h2>Patient Records</h2>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>First Name</th>
+                <th>Last Name</th>
+                <th>SSN</th>
+            </tr>
+        </thead>
+        <tbody id="patients-table-body"></tbody>
+    </table>
+</div>
+
   <title>Period Tracker</title>
   <style>
     body {
@@ -70,8 +84,8 @@
       <label for="role">Select Role:</label>
       <select id="role">
         <option value="user">User</option>
-        <option value="partner">Partner</option>
-        <option value="doctor">Doctor</option>
+        <option value="partner" selected>Partner</option>
+        <option value="doctor" >Doctor</option>
       </select>
       <div id="passwordField">
         <label for="password">Password:</label>
@@ -130,24 +144,50 @@
     let currentDate = new Date();
     let currentYear = currentDate.getFullYear();
     let currentMonth = currentDate.getMonth(); // 0-indexed
-    
+    document.addEventListener("DOMContentLoaded", function () {
+    // Check if the current user is a doctor
+    const currentUser = JSON.parse(localStorage.getItem("currentUser")); 
+    if (currentUser && currentUser.role === "doctor") {
+        document.getElementById("patients-section").style.display = "block"; // Show table
+
+        // Fetch patient data
+        fetch("/api/patients")
+            .then(response => response.json())
+            .then(data => {
+                console.log("Patients:", data);
+                const tableBody = document.getElementById("patients-table-body");
+                tableBody.innerHTML = ""; // Clear previous content
+
+                data.forEach(patient => {
+                    const row = document.createElement("tr");
+                    row.innerHTML = `
+                        <td>${patient.first_name}</td>
+                        <td>${patient.last_name}</td>
+                        <td>${patient.ssn}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            })
+            .catch(error => console.error("Error fetching patients:", error));
+    }
+});
     // Fetch users from the database and log them to the console
     fetch("/api/users")
       .then(response => response.json())
       .then(data => {
-        //console.log("users", data);
+        console.log("users", data);
       });
 
     // Fetch patients from the database and log them to the console
       fetch("/api/patients")
       .then(response => response.json())
       .then(data => {
-        //console.log("patients", data);
+       console.log("patients", data);
       });
 
     // Show/hide password field based on selected role.
     document.getElementById("role").addEventListener("change", function() {
-      if (this.value === "user") {
+      if (this.value === "user" ||this.value === "doctor" ) {
         document.getElementById("passwordField").style.display = "block";
       } else {
         document.getElementById("passwordField").style.display = "none";
@@ -157,7 +197,7 @@
     async function login() {
       const role = document.getElementById("role").value;
       const payload = { role };
-      if (role === "user") {
+      if (role === "user" || role === "doctor") {
         payload.password = document.getElementById("password").value;
       }
       const res = await fetch("/api/login", {
@@ -167,7 +207,9 @@
       });
       const data = await res.json();
       if (data.success) {
-        currentUser = data.user;
+        console.log("Logged in as", data);
+        currentUser = data;
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
         // Clear the password field so the password isn't left in the input box.
         document.getElementById("password").value = "";
         document.getElementById("login-section").style.display = "none";
@@ -189,6 +231,7 @@
       const res = await fetch("/api/logout", { method: "POST" });
       const data = await res.json();
       if (data.success) {
+      
         document.getElementById("login-section").style.display = "block";
         document.getElementById("menu").style.display = "none";
         hideAllSections();

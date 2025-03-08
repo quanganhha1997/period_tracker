@@ -64,7 +64,7 @@ app.get("/api/users", async (req, res) => {
 app.get("/api/patients", async (req, res) => {
   try {
     const result = await pool.query("SELECT * FROM periods ORDER BY cycle_start DESC");
-      console.log("++++++++++++ ", result.rows);
+      //console.log("++++++++++++ ", result.rows);
       res.json(result.rows);
   } catch (err) {
       console.error("Database Query Error:", err); // Log detailed error
@@ -87,14 +87,15 @@ app.use(express.static('public'));
 // Login endpoint with password support for user role.
 app.post('/api/login', (req, res) => {
   const { role, password } = req.body;
-  let userData = { role };
+  console.log( role,password);
+  let userData = {  };
 
   if (role === 'user') {
     // Check password (in production, use hashing!)
-    if (password !== "password123") {
+    if (password != "user123") {
       return res.status(403).json({ error: 'Invalid password' });
     }
-    userData = { ...userData, userId: 'user123' };
+    userData = { ...userData, userId: 'user123' ,role:'user'};
     // Ensure global permission record exists
     if (!globalUserPermissions[userData.userId]) {
       globalUserPermissions[userData.userId] = { partnerPermission: false, doctorAccessUntil: null };
@@ -105,19 +106,26 @@ app.post('/api/login', (req, res) => {
       ...userData, 
       partnerId: 'partner123', 
       linkedUserId, 
+      role:'partner',
       partnerPermission: globalUserPermissions[linkedUserId].partnerPermission 
     };
   } else if (role === 'doctor') {
-    const linkedUserId = 'user123';
+    if (password != "doc123") {
+      return res.status(403).json({ error: 'Invalid password' });
+    }
+    const linkedUserId = 'doc123';
     userData = { 
       ...userData, 
       doctorId: 'doctor123', 
+      role:'doctor',
       linkedUserId, 
-      doctorAccessUntil: globalUserPermissions[linkedUserId].doctorAccessUntil || 
-        new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() 
+      //doctorAccessUntil: globalUserPermissions[linkedUserId].doctorAccessUntil || 
+        //new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() 
     };
   }
+
   req.session.user = userData;
+ 
   res.json({ success: true, user: req.session.user });
 });
 
