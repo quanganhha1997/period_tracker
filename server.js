@@ -147,6 +147,7 @@ app.post('/api/permissions', (req, res) => {
 // Log period endpoint (only user can log periods)
 app.post('/api/periods', (req, res) => {
   const user = req.session.user;
+  console.log(`user`, user);
   if (!user || user.role !== 'user') {
     return res.status(403).json({ error: 'Only users can log periods' });
   }
