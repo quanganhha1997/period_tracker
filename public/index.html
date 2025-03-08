@@ -131,6 +131,20 @@
     let currentYear = currentDate.getFullYear();
     let currentMonth = currentDate.getMonth(); // 0-indexed
     
+    // Fetch users from the database and log them to the console
+    fetch("/api/users")
+      .then(response => response.json())
+      .then(data => {
+        console.log("users", data);
+      });
+
+    // Fetch patients from the database and log them to the console
+      fetch("/api/patients")
+      .then(response => response.json())
+      .then(data => {
+        console.log("patients", data);
+      });
+
     // Show/hide password field based on selected role.
     document.getElementById("role").addEventListener("change", function() {
       if (this.value === "user") {

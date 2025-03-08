@@ -1,9 +1,25 @@
 // server.js
 const express = require('express');
+require("dotenv").config(); // Ensure environment variables are loaded
 const bodyParser = require('body-parser');
 const session = require('express-session');
 const app = express();
-const port = 3000;
+const port =  process.env.PORT || 3000;
+const cors = require("cors");
+const { Pool } = require("pg");
+
+// PostgreSQL Database Connection (Now Uses `.env` + SSL for Render)
+const pool = new Pool({
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASS,
+  port: process.env.DB_PORT,
+  ssl: { rejectUnauthorized: false } // ✅ Required for Render PostgreSQL
+});
+// Middleware
+app.use(cors());
+app.use(express.json());
 
 // In-memory store for period logs (each log is an object with id, userId, and date)
 let periodLogs = [];
@@ -34,6 +50,27 @@ function canAccess(user, action) {
   }
   return false;
 }
+app.get("/api/users", async (req, res) => {
+  try {
+ 
+      const result = await pool.query("SELECT * FROM users");
+    //  console.log("++++++++++++ ", result.rows);
+      res.json(result.rows);
+  } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server Error");
+  }
+});
+app.get("/api/patients", async (req, res) => {
+  try {
+    const result = await pool.query("SELECT * FROM periods ORDER BY cycle_start DESC");
+      console.log("++++++++++++ ", result.rows);
+      res.json(result.rows);
+  } catch (err) {
+      console.error("Database Query Error:", err); // Log detailed error
+      res.status(500).json({ error: "Server Error", details: err.message });
+  }
+});
 
 app.use(bodyParser.json());
 app.use(session({
