@@ -518,7 +518,7 @@ function displayLoggedInUser() {
         alert(data.error);
       }
     }
-   async function fetchLogs() {
+    async function fetchLogs() {
     const res = await fetch("/api/periods");
     const data = await res.json();
 
@@ -528,10 +528,12 @@ function displayLoggedInUser() {
     if (data.logs) {
         data.logs.forEach(log => {
             const li = document.createElement("li");
-            li.textContent = "Period logged on: " + log.date + " ";
+            li.textContent = `Period logged on: ${new Date(log.date).toLocaleDateString()} `;
 
-            // Ensure the partner can also see logs if permission is granted
-            if (currentUser && (currentUser.role === "user" || (currentUser.role === "partner" && currentUser.user.partnerPermission))) {
+            if (currentUser && (currentUser.role === "user" || 
+                (currentUser.role === "partner" && currentUser.user.partnerPermission))) {
+                
+                // Allow partners to see logs when permission is granted
                 updateCalendarWithLog(log);
             }
 
@@ -584,7 +586,6 @@ function displayLoggedInUser() {
         logsList.textContent = "No logs available";
     }
 }
-
 
     
     async function updateCalendar() {

@@ -101,7 +101,7 @@ app.post('/api/login', (req, res) => {
       globalUserPermissions[userData.userId] = { partnerPermission: false, doctorAccessUntil: null };
     }
   } else if (role === 'partner') {
-    const linkedUserId = 'partner123';
+    const linkedUserId = 'user123';
     userData = { 
       ...userData, 
       partnerId: 'partner123', 
@@ -152,17 +152,25 @@ app.post('/api/logout', (req, res) => {
 app.post('/api/permissions', (req, res) => {
   const user = req.session.user;
   if (!user || user.role !== 'user') {
-    return res.status(403).json({ error: 'Access denied' });
+      return res.status(403).json({ error: 'Access denied' });
   }
+
   const { partnerPermission, doctorAccessUntil } = req.body;
+  
+  // Log permission changes
+  console.log(`Updating permissions for ${user.userId}:`);
+  console.log(`Partner Permission: ${partnerPermission}`);
+  console.log(`Doctor Access Until: ${doctorAccessUntil}`);
+
   // Update the global permission store for the user
   globalUserPermissions[user.userId] = { partnerPermission, doctorAccessUntil };
+  
   // Also update the session for the user
   req.session.user.partnerPermission = partnerPermission;
   req.session.user.doctorAccessUntil = doctorAccessUntil;
+
   res.json({ success: true, user: req.session.user });
 });
-
 // ---------- Period Logging Endpoints ----------
 
 // Log period endpoint (only user can log periods)
