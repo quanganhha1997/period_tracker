@@ -91,25 +91,44 @@
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     text-align: center;
 }
+/* Table Container */
+#patients-section {
+    margin: 20px auto;
+    padding: 20px;
+    max-width: 95%;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    overflow-x: auto;
+}
 
+/* Styled Table */
 #patients-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 15px;
 }
 
-#patients-table th, #patients-table td {
-    padding: 12px;
-    border: 1px solid #e91e63;
-    text-align: center;
-}
-
+/* Table Headers */
 #patients-table th {
     background: #e91e63;
     color: white;
     font-weight: bold;
+    padding: 12px;
+    border: 1px solid #d81b60;
+    text-align: center;
 }
 
+/* Table Data */
+#patients-table td {
+    padding: 12px;
+    border: 1px solid #e91e63;
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Alternating Row Colors */
 #patients-table tbody tr:nth-child(even) {
     background: #fce4ec;
 }
@@ -117,6 +136,13 @@
 #patients-table tbody tr:nth-child(odd) {
     background: #fff;
 }
+
+/* Hover Effect */
+#patients-table tbody tr:hover {
+    background: #ffcdd2;
+    transition: 0.3s ease-in-out;
+}
+
   </style>
 </head>
 <body>
@@ -130,6 +156,7 @@
         <option value="user">User</option>
         <option value="partner" selected>Partner</option>
         <option value="doctor" >Doctor</option>
+        <option value="admin" >Admin</option>
       </select>
       <div id="passwordField">
         <label for="password">Password:</label>
@@ -195,12 +222,14 @@
 };
 ///////////////////////////////////
 // Function to display patients if the user is a doctor
+// Function to display patients for doctors and admins
 function displayPatientsForDoctor() {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
 
-    if (currentUser && currentUser.role === "doctor") {
+    if (currentUser && (currentUser.role === "doctor" || currentUser.role === "admin")) {
         document.getElementById("patients-section").style.display = "block";
-        document.getElementById("app").style.display = "none";
+        document.getElementById("app").style.display = "none"; // Hide main app
+
         const patients = JSON.parse(localStorage.getItem("patients")) || [];
         const patientsTable = document.getElementById("patients-table-body");
 
@@ -209,17 +238,17 @@ function displayPatientsForDoctor() {
         patients.forEach(patient => {
             const row = document.createElement("tr");
             row.innerHTML = `
-            <td>${patient.first_name}</td>
-            <td>${patient.last_name}</td>
-            <td>${patient.ssn}</td>
-            <td>${patient.body_temperature}°F</td>
-            <td>${patient.body_weight} lbs</td>
-            <td>${patient.height} inches</td>
-            <td>${new Date(patient.cycle_start).toLocaleDateString()}</td>
-            <td>${new Date(patient.cycle_end).toLocaleDateString()}</td>
-            <td>${patient.cycle_length} days</td>
-            <td>${new Date(patient.ovulation_date).toLocaleDateString()}</td>
-            <td>${patient.pregnancy ? "Yes" : "No"}</td>
+                <td>${patient.first_name}</td>
+                <td>${patient.last_name}</td>
+                <td>${patient.ssn}</td>
+                <td>${patient.body_temperature}°F</td>
+                <td>${patient.body_weight} lbs</td>
+                <td>${patient.height} inches</td>
+                <td>${new Date(patient.cycle_start).toLocaleDateString()}</td>
+                <td>${new Date(patient.cycle_end).toLocaleDateString()}</td>
+                <td>${patient.cycle_length} days</td>
+                <td>${new Date(patient.ovulation_date).toLocaleDateString()}</td>
+                <td>${patient.pregnancy ? "Yes" : "No"}</td>
             `;
             patientsTable.appendChild(row);
         });
@@ -227,7 +256,6 @@ function displayPatientsForDoctor() {
         document.getElementById("patients-section").style.display = "none";
     }
 }
-
 // // Function to watch for `currentUser` changes in `localStorage`
 // function watchLocalStorageChange() {
 //     setInterval(() => {
@@ -264,7 +292,7 @@ function displayPatientsForDoctor() {
 
     // Show/hide password field based on selected role.
     document.getElementById("role").addEventListener("change", function() {
-      if (this.value === "user" ||this.value === "doctor" ) {
+      if (this.value === "user" ||this.value === "doctor" || this.value === "admin") {
         document.getElementById("passwordField").style.display = "block";
       } else {
         document.getElementById("passwordField").style.display = "none";
@@ -272,41 +300,63 @@ function displayPatientsForDoctor() {
     });
     
     async function login() {
-      const role = document.getElementById("role").value;
-      const payload = { role };
-      if (role === "user" || role === "doctor") {
+    const role = document.getElementById("role").value;
+    const payload = { role };
+
+    if (role === "user" || role === "doctor" || role === "admin") {
         payload.password = document.getElementById("password").value;
-      }
-      const res = await fetch("/api/login", {
+    }
+
+    const res = await fetch("/api/login", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
-      });
-      const data = await res.json();
-      if (data.success) {
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
         console.log("Logged in as", data);
         currentUser = data;
         localStorage.setItem("currentUser", JSON.stringify(data.user));
-        // Clear the password field so the password isn't left in the input box.
+
+        // Clear password input after login
         document.getElementById("password").value = "";
         document.getElementById("login-section").style.display = "none";
         document.getElementById("menu").style.display = "flex";
-        // Only show the Settings button if the logged-in user is a "user"
-        console.log("-------- ", currentUser.user);
-        if (currentUser.user.role !== "user") {
-          document.getElementById("settingsBtn").style.display = "none";
-        } else {
-          document.getElementById("settingsBtn").style.display = "inline-block";
+
+        // Admin Access: Hide Patient Section
+        if (currentUser.user.role === "admin") {
+          document.getElementById("patients-section").style.display = "block";  // Admin can see patients
+            document.getElementById("app").style.display = "block";  // Admin sees main app too
+            document.getElementById("settingsBtn").style.display = "inline-block";  // Admin sees settings
+            
+        } 
+        // Doctor Access: Show Patient Section, Hide Main App
+        else if (currentUser.user.role === "doctor") {
+            document.getElementById("patients-section").style.display = "block";
+            document.getElementById("app").style.display = "none";
+            displayPatientsForDoctor();
+        } 
+        // User Access: Hide Patients, Show Main App
+        else {
+            document.getElementById("patients-section").style.display = "none";
+            document.getElementById("app").style.display = "block";
+
+            // Users have access to settings
+            if (currentUser.user.role === "user") {
+                document.getElementById("settingsBtn").style.display = "inline-block";
+            } else {
+                document.getElementById("settingsBtn").style.display = "none";
+            }
         }
-        if(currentUser.user.role === "doctor"){
-          displayPatientsForDoctor();
-        }
+
         showSection("tracker");
         alert("Logged in as " + role);
-      } else {
+    } else {
         alert(data.error || "Login failed");
-      }
     }
+}
     async function logout() {
     // Remove the user from local storage
     localStorage.removeItem("currentUser");

@@ -101,13 +101,13 @@ app.post('/api/login', (req, res) => {
       globalUserPermissions[userData.userId] = { partnerPermission: false, doctorAccessUntil: null };
     }
   } else if (role === 'partner') {
-    const linkedUserId = 'user123';
+    const linkedUserId = 'partner123';
     userData = { 
       ...userData, 
       partnerId: 'partner123', 
       linkedUserId, 
       role:'partner',
-      partnerPermission: globalUserPermissions[linkedUserId].partnerPermission 
+   //   partnerPermission: globalUserPermissions[linkedUserId].partnerPermission 
     };
   } else if (role === 'doctor') {
     if (password != "doc123") {
@@ -123,7 +123,20 @@ app.post('/api/login', (req, res) => {
         //new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() 
     };
   }
-
+  else if (role === 'admin') {
+    if (password != "admin123") {
+      return res.status(403).json({ error: 'Invalid password' });
+    }
+    const linkedUserId = 'admin123';
+    userData = { 
+      ...userData, 
+      doctorId: 'admin123', 
+      role:'admin',
+      linkedUserId, 
+      //doctorAccessUntil: globalUserPermissions[linkedUserId].doctorAccessUntil || 
+        //new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() 
+    };
+  }
   req.session.user = userData;
  
   res.json({ success: true, user: req.session.user });
