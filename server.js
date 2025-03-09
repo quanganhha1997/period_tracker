@@ -107,7 +107,7 @@ app.post('/api/login', (req, res) => {
       partnerId: 'partner123', 
       linkedUserId, 
       role:'partner',
-   //   partnerPermission: globalUserPermissions[linkedUserId].partnerPermission 
+      partnerPermission: globalUserPermissions[linkedUserId].partnerPermission 
     };
   } else if (role === 'doctor') {
     if (password != "doc123") {
@@ -119,8 +119,8 @@ app.post('/api/login', (req, res) => {
       doctorId: 'doctor123', 
       role:'doctor',
       linkedUserId, 
-      //doctorAccessUntil: globalUserPermissions[linkedUserId].doctorAccessUntil || 
-        //new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() 
+      doctorAccessUntil: globalUserPermissions[linkedUserId].doctorAccessUntil || 
+      new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() 
     };
   }
   else if (role === 'admin') {
@@ -216,29 +216,91 @@ app.delete('/api/periods/:id', (req, res) => {
   periodLogs.splice(logIndex, 1);
   res.json({ success: true });
 });
+function isWithinAllowedRangeForPartner(date) {
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.setMonth(now.getMonth() - 6));
+  return new Date(date) >= sixMonthsAgo;
+}
 
-// Get period logs endpoint
+// Helper function to check if a date is within the allowed range for a doctor (past 12 months)
+function isWithinAllowedRangeForDoctor(date) {
+  const now = new Date();
+  const twelveMonthsAgo = new Date(now.setMonth(now.getMonth() - 12));
+  return new Date(date) >= twelveMonthsAgo;
+}
+// // Get period logs endpoint
+// app.get('/api/periods', (req, res) => {
+//   const user = req.session.user;
+//   if (!user) return res.status(403).json({ error: 'Not logged in' });
+  
+//   if (user.role === 'user') {
+//     // Return logs for the logged-in user.
+//     const logs = periodLogs.filter(log => log.userId === user.userId);
+//     return res.json({ logs });
+//   }
+//   if (user.role === 'partner' || user.role === 'doctor') {
+//     // Enforce permission: only return logs if permission is granted.
+//     if (!canAccess(user, 'view_logs')) {
+//       return res.status(403).json({ error: 'Access denied. User has not granted permission.' });
+//     }
+//     // Return logs for the linked user (simulate user123)
+//     const logs = periodLogs.filter(log => log.userId === user.linkedUserId);
+//     return res.json({ logs });
+//   }
+//   return res.status(403).json({ error: 'Access denied' });
+// });
+// Get period logs endpoint with time-range restrictions for partners and doctors.
 app.get('/api/periods', (req, res) => {
   const user = req.session.user;
   if (!user) return res.status(403).json({ error: 'Not logged in' });
   
   if (user.role === 'user') {
-    // Return logs for the logged-in user.
+    // Return all logs for the user.
     const logs = periodLogs.filter(log => log.userId === user.userId);
     return res.json({ logs });
   }
-  if (user.role === 'partner' || user.role === 'doctor') {
-    // Enforce permission: only return logs if permission is granted.
+  if (user.role === 'partner') {
     if (!canAccess(user, 'view_logs')) {
       return res.status(403).json({ error: 'Access denied. User has not granted permission.' });
     }
-    // Return logs for the linked user (simulate user123)
-    const logs = periodLogs.filter(log => log.userId === user.linkedUserId);
+    // Only return logs within the past 6 months.
+    const logs = periodLogs.filter(log => log.userId === user.linkedUserId && isWithinAllowedRangeForPartner(log.date));
+    return res.json({ logs });
+  }
+  if (user.role === 'doctor') {
+    if (!canAccess(user, 'view_logs')) {
+      return res.status(403).json({ error: 'Access denied. Doctor access expired or not granted.' });
+    }
+    // Only return logs within the past 12 months.
+    const logs = periodLogs.filter(log => log.userId === user.linkedUserId && isWithinAllowedRangeForDoctor(log.date));
     return res.json({ logs });
   }
   return res.status(403).json({ error: 'Access denied' });
 });
+// Get period logs endpoint
+// app.get('/api/periods', (req, res) => {
+//   const user = req.session.user;
+//   if (!user) return res.status(403).json({ error: 'Not logged in' });
+  
+//   if (user.role === 'user') {
+//     // Return logs for the logged-in user.
+//     const logs = periodLogs.filter(log => log.userId === user.userId);
+//     return res.json({ logs });
+//   }
+//   if (user.role === 'partner' || user.role === 'doctor') {
+//     // Enforce permission: only return logs if permission is granted.
+//     if (!canAccess(user, 'view_logs')) {
+//       return res.status(403).json({ error: 'Access denied. User has not granted permission.' });
+//     }
+//     // Return logs for the linked user (simulate user123)
+//     const logs = periodLogs.filter(log => log.userId === user.linkedUserId);
+//     return res.json({ logs });
+//   }
+//   return res.status(403).json({ error: 'Access denied' });
+// });
 
 app.listen(port, () => {
   console.log(`Server listening at http://localhost:${port}`);
 });
+
+
