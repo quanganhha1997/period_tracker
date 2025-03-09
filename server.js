@@ -222,7 +222,6 @@ function isWithinAllowedRangeForPartner(date) {
   return new Date(date) >= sixMonthsAgo;
 }
 
-<<<<<<< HEAD
 // Helper function to check if a date is within the allowed range for a doctor (past 12 months)
 function isWithinAllowedRangeForDoctor(date) {
   const now = new Date();
@@ -251,38 +250,6 @@ function isWithinAllowedRangeForDoctor(date) {
 //   return res.status(403).json({ error: 'Access denied' });
 // });
 // Get period logs endpoint with time-range restrictions for partners and doctors.
-=======
-// Get period logs endpoint with time-range restrictions for partners and doctors.
-app.get('/api/periods', (req, res) => {
-  const user = req.session.user;
-  if (!user) return res.status(403).json({ error: 'Not logged in' });
-  
-  if (user.role === 'user') {
-    // Return all logs for the user.
-    const logs = periodLogs.filter(log => log.userId === user.userId);
-    return res.json({ logs });
-  }
-  if (user.role === 'partner') {
-    if (!canAccess(user, 'view_logs')) {
-      return res.status(403).json({ error: 'Access denied. User has not granted permission.' });
-    }
-    // Only return logs within the past 6 months.
-    const logs = periodLogs.filter(log => log.userId === user.linkedUserId && isWithinAllowedRangeForPartner(log.date));
-    return res.json({ logs });
-  }
-  if (user.role === 'doctor') {
-    if (!canAccess(user, 'view_logs')) {
-      return res.status(403).json({ error: 'Access denied. Doctor access expired or not granted.' });
-    }
-    // Only return logs within the past 12 months.
-    const logs = periodLogs.filter(log => log.userId === user.linkedUserId && isWithinAllowedRangeForDoctor(log.date));
-    return res.json({ logs });
-  }
-  return res.status(403).json({ error: 'Access denied' });
-});
-
-// Get period logs endpoint
->>>>>>> upstream/main
 app.get('/api/periods', (req, res) => {
   const user = req.session.user;
   if (!user) return res.status(403).json({ error: 'Not logged in' });
