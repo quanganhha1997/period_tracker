@@ -624,7 +624,7 @@ async function updateCalendar() {
     if (data.logs) {
         periodDates = data.logs.map(log => {
             let storedDate = new Date(log.date);
-            return storedDate.toISOString(); // Normalize to YYYY-MM-DD
+            return storedDate.toISOString().split("T")[0]; // Normalize to YYYY-MM-DD
         });
     }
 
