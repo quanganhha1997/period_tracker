@@ -555,8 +555,8 @@ function displayLoggedInUser() {
                 // Allow partners to see logs when permission is granted
                 updateCalendarWithLog(log);
             }
-
-            if (currentUser && currentUser.role === "user") {
+            console.log("---> ",currentUser);
+            if (currentUser.user.role === "user") {
                 const editBtn = document.createElement("button");
                 editBtn.textContent = "Edit";
                 editBtn.onclick = async () => {
@@ -624,7 +624,7 @@ async function updateCalendar() {
     if (data.logs) {
         periodDates = data.logs.map(log => {
             let storedDate = new Date(log.date);
-            return storedDate.toISOString().split("T")[0]; // Normalize to YYYY-MM-DD
+            return storedDate.toISOString(); // Normalize to YYYY-MM-DD
         });
     }
 
