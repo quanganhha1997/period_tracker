@@ -2,29 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <div id="patients-section" style="display: none;">
-    <button onclick="logout()">Logout</button>
-    <h2>Patient Records</h2>
-    <table border="1">
-        <thead>
-            <tr>
-              <th>First Name</th>
-              <th>Last Name</th>
-              <th>SSN</th>
-              <th>Body Temperature</th>
-              <th>Body Weight</th>
-              <th>Height</th>
-              <th>Cycle Start</th>
-              <th>Cycle End</th>
-              <th>Cycle Length</th>
-              <th>Ovulation Date</th>
-              <th>Pregnancy Status</th>
-            </tr>
-        </thead>
-        <tbody id="patients-table-body"></tbody>
-    </table>
-</div>
-
+ 
+<h2 id="loggedInUser" style="display: none;"></h2>
   <title>Period Tracker</title>
   <style>
     body {
@@ -188,6 +167,28 @@
 </head>
 <body>
   <h2 id="loggedInUser" style="display: none;"></h2>
+  <div id="patients-section" style="display: none;">
+    <button onclick="logout()">Logout</button>
+    <h2>Patient Records</h2>
+    <table border="1">
+        <thead>
+            <tr>
+              <th>First Name</th>
+              <th>Last Name</th>
+              <th>SSN</th>
+              <th>Body Temperature</th>
+              <th>Body Weight</th>
+              <th>Height</th>
+              <th>Cycle Start</th>
+              <th>Cycle End</th>
+              <th>Cycle Length</th>
+              <th>Ovulation Date</th>
+              <th>Pregnancy Status</th>
+            </tr>
+        </thead>
+        <tbody id="patients-table-body"></tbody>
+    </table>
+</div>
   <div id="app">
     <h1>Period Tracker</h1>
     
@@ -279,10 +280,11 @@
 // Function to display patients for doctors and admins
 function displayPatientsForDoctor() {
     const currentUser = JSON.parse(localStorage.getItem("currentUser"));
-
+    let displaySwitch = "none";
+    if(currentUser.role === "admin")displaySwitch="block"
     if (currentUser && (currentUser.role === "doctor" || currentUser.role === "admin")) {
         document.getElementById("patients-section").style.display = "block";
-        document.getElementById("app").style.display = "none"; // Hide main app
+        document.getElementById("app").style.display = displaySwitch; // Hide main app
 
         const patients = JSON.parse(localStorage.getItem("patients")) || [];
         const patientsTable = document.getElementById("patients-table-body");
@@ -413,8 +415,8 @@ function displayLoggedInUser() {
         // Admin Access: Hide Patient Section
         if (currentUser.user.role === "admin") {
           document.getElementById("patients-section").style.display = "block";  // Admin can see patients
-            document.getElementById("app").style.display = "block";  // Admin sees main app too
-            document.getElementById("settingsBtn").style.display = "inline-block";  // Admin sees settings
+          document.getElementById("app").style.display = "block";
+          document.getElementById("settingsBtn").style.display = "inline-block";  // Admin sees settings
             
         } 
         // Doctor Access: Show Patient Section, Hide Main App
@@ -429,7 +431,7 @@ function displayLoggedInUser() {
             document.getElementById("app").style.display = "block";
 
             // Users have access to settings
-            if (currentUser.user.role === "user") {
+            if (currentUser.user.role === "user"|| currentUser.user.role=="admin") {
                 document.getElementById("settingsBtn").style.display = "inline-block";
             } else {
                 document.getElementById("settingsBtn").style.display = "none";
