@@ -605,58 +605,116 @@ function displayLoggedInUser() {
         logsList.textContent = "No logs available";
     }
 }
+async function updateCalendar() {
+    const calendarDiv = document.getElementById("calendar");
+    calendarDiv.innerHTML = "";
 
-    
-    async function updateCalendar() {
-      const calendarDiv = document.getElementById("calendar");
-      calendarDiv.innerHTML = "";
-      
-      // Update month-year label
-      const monthYearLabel = document.getElementById("monthYearLabel");
-      const monthNames = ["January", "February", "March", "April", "May", "June",
-                          "July", "August", "September", "October", "November", "December"];
-      monthYearLabel.textContent = monthNames[currentMonth] + " " + currentYear;
-      
-      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-      
-      // Create a grid of days for the current month
-      for (let day = 1; day <= daysInMonth; day++) {
+    // Update month-year label
+    const monthYearLabel = document.getElementById("monthYearLabel");
+    const monthNames = ["January", "February", "March", "April", "May", "June",
+                        "July", "August", "September", "October", "November", "December"];
+    monthYearLabel.textContent = monthNames[currentMonth] + " " + currentYear;
+
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // Fetch period logs and normalize stored dates
+    const res = await fetch("/api/periods");
+    const data = await res.json();
+    let periodDates = [];
+    if (data.logs) {
+        periodDates = data.logs.map(log => {
+            let storedDate = new Date(log.date);
+            return storedDate.toISOString().split("T")[0]; // Normalize to YYYY-MM-DD
+        });
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(currentYear, currentMonth, day);
+        const normalizedDate = date.toISOString().split("T")[0]; // Ensure the format matches stored dates
+
         const dayDiv = document.createElement("div");
         dayDiv.textContent = day;
-        
-        // Fetch period logs (for demo, we fetch each time)
-        fetch("/api/periods")
-          .then(res => res.json())
-          .then(data => {
-            if (data.logs) {
-              data.logs.forEach(log => {
-                const logDate = new Date(log.date);
-                // Highlight period day
-                if (date.toDateString() === logDate.toDateString()) {
-                  dayDiv.classList.add("period-day");
-                }
-                // Ovulation day: 14 days after period start
-                const ovulation = new Date(logDate);
-                ovulation.setDate(ovulation.getDate() + 14);
-                if (date.toDateString() === ovulation.toDateString()) {
-                  dayDiv.classList.add("ovulation-day");
-                }
-                // Fertility window: from logDate+10 to logDate+16
-                const fertilityStart = new Date(logDate);
-                fertilityStart.setDate(fertilityStart.getDate() + 10);
-                const fertilityEnd = new Date(logDate);
-                fertilityEnd.setDate(fertilityEnd.getDate() + 16);
-                if (date >= fertilityStart && date <= fertilityEnd) {
-                  dayDiv.classList.add("fertility-day");
-                }
-              });
-            }
-          });
-          
+
+        // Check if the normalized date matches any period log
+        if (periodDates.includes(normalizedDate)) {
+            dayDiv.classList.add("period-day");
+        }
+
+        // Ovulation day: 14 days after period start
+        if (periodDates.some(d => {
+            let periodStart = new Date(d);
+            periodStart.setDate(periodStart.getDate() + 14);
+            return periodStart.toISOString().split("T")[0] === normalizedDate;
+        })) {
+            dayDiv.classList.add("ovulation-day");
+        }
+
+        // Fertility window: from period start +10 days to +16 days
+        if (periodDates.some(d => {
+            let fertilityStart = new Date(d);
+            fertilityStart.setDate(fertilityStart.getDate() + 10);
+            let fertilityEnd = new Date(d);
+            fertilityEnd.setDate(fertilityEnd.getDate() + 16);
+            return date >= fertilityStart && date <= fertilityEnd;
+        })) {
+            dayDiv.classList.add("fertility-day");
+        }
+
         calendarDiv.appendChild(dayDiv);
-      }
     }
+}
+
+    
+    // async function updateCalendar() {
+    //   const calendarDiv = document.getElementById("calendar");
+    //   calendarDiv.innerHTML = "";
+      
+    //   // Update month-year label
+    //   const monthYearLabel = document.getElementById("monthYearLabel");
+    //   const monthNames = ["January", "February", "March", "April", "May", "June",
+    //                       "July", "August", "September", "October", "November", "December"];
+    //   monthYearLabel.textContent = monthNames[currentMonth] + " " + currentYear;
+      
+    //   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+      
+    //   // Create a grid of days for the current month
+    //   for (let day = 1; day <= daysInMonth; day++) {
+    //     const date = new Date(currentYear, currentMonth, day);
+    //     const dayDiv = document.createElement("div");
+    //     dayDiv.textContent = day;
+        
+    //     // Fetch period logs (for demo, we fetch each time)
+    //     fetch("/api/periods")
+    //       .then(res => res.json())
+    //       .then(data => {
+    //         if (data.logs) {
+    //           data.logs.forEach(log => {
+    //             const logDate = new Date(log.date);
+    //             // Highlight period day
+    //             if (date.toDateString() === logDate.toDateString()) {
+    //               dayDiv.classList.add("period-day");
+    //             }
+    //             // Ovulation day: 14 days after period start
+    //             const ovulation = new Date(logDate);
+    //             ovulation.setDate(ovulation.getDate() + 14);
+    //             if (date.toDateString() === ovulation.toDateString()) {
+    //               dayDiv.classList.add("ovulation-day");
+    //             }
+    //             // Fertility window: from logDate+10 to logDate+16
+    //             const fertilityStart = new Date(logDate);
+    //             fertilityStart.setDate(fertilityStart.getDate() + 10);
+    //             const fertilityEnd = new Date(logDate);
+    //             fertilityEnd.setDate(fertilityEnd.getDate() + 16);
+    //             if (date >= fertilityStart && date <= fertilityEnd) {
+    //               dayDiv.classList.add("fertility-day");
+    //             }
+    //           });
+    //         }
+    //       });
+          
+    //     calendarDiv.appendChild(dayDiv);
+    //   }
+    // }
     
     function prevMonth() {
       if (currentMonth === 0) {

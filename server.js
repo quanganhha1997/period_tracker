@@ -119,8 +119,7 @@ app.post('/api/login', (req, res) => {
       doctorId: 'doctor123', 
       role:'doctor',
       linkedUserId, 
-      doctorAccessUntil: globalUserPermissions[linkedUserId].doctorAccessUntil || 
-      new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() 
+      //doctorAccessUntil: globalUserPermissions[linkedUserId].doctorAccessUntil || new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString() 
     };
   }
   else if (role === 'admin') {
