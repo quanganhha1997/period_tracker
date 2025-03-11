@@ -8,6 +8,84 @@ body {
   background-color: #fce4ec; /* Fallback color */
 }
 
+
+/* Login Section Styling */
+#login-section {
+  background-color: white;
+  border-radius: 8px;
+  padding: 25px;
+  box-shadow: 0 4px 15px rgba(233, 30, 99, 0.2);
+  margin-bottom: 20px;
+  margin-left: auto;
+  margin-right: auto;
+  transition: all 0.3s ease;
+  font-size: 1.5em;
+  max-width: 25rem; 
+  width: 80%; 
+}
+
+#login-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #333;
+  text-align: left;
+}
+
+#login-section select,
+#login-section input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: border 0.3s ease;
+  box-sizing: border-box; /* Include padding in the width calculation */
+  max-width: 100%; /* Ensure input doesn't overflow container */
+  height: 42px; /* Consistent height for inputs and select */
+}
+
+#login-section input::placeholder {
+  color: #999;
+  font-size: 14px;
+}
+
+#login-section select:focus,
+#login-section input:focus {
+  border-color: #ed6785;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.2);
+}
+
+#login-section button {
+  background-color: #ed6785;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 24px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  width: 100%;
+  margin-top: 10px;
+  height: 42px; /* Match input height */
+}
+
+#login-section button:hover {
+  background-color: #d81b60;
+}
+
+#passwordField {
+  display: none;
+  margin-top: 10px;
+  margin-bottom: 5px;
+}
+
+#login-section select {
+  margin-bottom: 20px;
+}
+
 #bgImage {
   position: fixed;
   top: 0;
@@ -26,14 +104,18 @@ body {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
   z-index: 10; /* Higher than bgImage */
   max-width: 600px;
-  width: 90%;
+  width: 90%;  
   text-align: center;
+}
+
+h3 {
+    text-align: left;
 }
 
 .menu-bar {
   display: flex;
   justify-content: space-around;
-  background: #e91e63;
+  background: #ed6785;
   padding: 10px;
   border-radius: 5px;
   color: white;
@@ -44,7 +126,7 @@ body {
   background: none;
   border: none;
   color: white;
-  font-size: 16px;
+  font-size: 1rem;
   cursor: pointer;
 }
 
@@ -72,8 +154,44 @@ section.active { display: block; }
 ul { list-style-type: none; padding: 0; }
 li { margin: 5px 0; }
 li button { margin-left: 5px; }
-.month-nav { margin-top: 10px; }
-.month-nav button { margin: 0 10px; }
+
+.month-nav { 
+  margin-top: 20px;
+  margin-bottom: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.month-nav button { 
+  background-color: #ed6785;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 2.5rem;
+  height: 2.5rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.month-nav button:hover {
+  background-color: #d81b60;
+  transform: scale(1.1);
+}
+
+#monthYearLabel {
+  font-weight: bold;
+  font-size: 1.25rem;
+  color: #333;
+  padding: 0 15px;
+  flex-grow: 1;
+  text-align: center;
+}
 
 /* Initially hide the password field; it will be shown only for users */
 #passwordField { display: none; }
@@ -102,14 +220,14 @@ li button { margin-left: 5px; }
   color: white;
   font-weight: bold;
   padding: 12px;
-  border: 1px solid #d81b60;
+  border: 1px solid #ed6785;
   text-align: center;
 }
 
 /* Table Data */
 #patients-table td {
   padding: 12px;
-  border: 1px solid #e91e63;
+  border: 1px solid #ed6785;
   text-align: center;
   font-size: 14px;
 }
@@ -168,4 +286,193 @@ li button { margin-left: 5px; }
 
 .fertility-day {
   background-color: #ccffcc;
+}
+
+/* Period Logging Controls */
+.period-logging-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+
+input#periodDate {
+  padding: 10px 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  min-width: 200px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+  height: 42px;
+}
+
+input#periodDate:focus {
+  border-color: #ed6785;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.2);
+}
+
+.log-period-btn {
+  background-color: #ed6785;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.log-period-btn:hover {
+  background-color: #d81b60;
+  transform: translateY(-2px);
+  /* box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); */
+}
+
+/* Log History Section */
+#logs {
+  padding: 15px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+}
+
+#logsList {
+  max-height: 350px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+#logsList li {
+  display: flex;
+  
+  align-items: center;
+  padding: 12px 15px;
+  margin-bottom: 10px;
+  background-color: white;
+  border: 0.1rem solid #f8bbd0;
+  border-radius: 0.25rem;
+  transition: all 0.2s ease;
+  justify-content: center;
+}
+
+#logsList li:hover {
+  box-shadow: 0 4px 8px rgba(233, 30, 99, 0.2);
+  transform: translateY(-2px);
+}
+
+#logsList li button {
+  background-color: #ed6785;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-left: 8px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+}
+
+#logsList li button:hover {
+  background-color: #d81b60;
+  transform: scale(1.05);
+}
+
+/* Empty state message */
+#logsList:empty::after {
+  content: "No period logs recorded yet";
+  display: block;
+  text-align: center;
+  color: #f06292;
+  padding: 20px;
+  font-style: italic;
+}
+
+/* Settings / Permissions Section */
+#permissions {
+  padding: 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 8px;
+  max-width: 90%;
+  margin: 0 auto;
+}
+
+#permissions label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  background-color: white;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  border: 0.1rem solid #f8bbd0;
+}
+
+#permissions label:hover {
+  box-shadow: 0 2px 5px rgba(233, 30, 99, 0.2);
+}
+
+#permissions input[type="checkbox"] {
+  margin-left: 12px; 
+  width: 20px;
+  height: 20px;
+  accent-color: #ed6785;
+  order: 2; 
+}
+
+/* Style for the label text for the partner permission checkbox */
+#permissions label[for="partnerPermission"]::before {
+  content: "Allow Partner to view logs";
+  order: 1; 
+}
+
+/* Hide the original text since we're replacing it with ::before */
+#permissions label[for="partnerPermission"] {
+  font-size: 0;
+}
+
+#permissions input[type="datetime-local"] {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+#permissions input[type="datetime-local"]:focus {
+  border-color: #ed6785;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(233, 30, 99, 0.2);
+}
+
+#permissions button {
+  background-color: #ed6785;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 12px 24px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: block;
+  margin: 25px auto 10px;
+  width: 80%;
+  max-width: 300px;
+}
+
+#permissions button:hover {
+  background-color: #d81b60;
+  transform: translateY(-2px);
 }
