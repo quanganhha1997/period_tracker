@@ -331,80 +331,135 @@ async function fetchLogs() {
 }
 
 async function updateCalendar() {
+    // Show loading state on the calendar
     const calendarDiv = document.getElementById("calendar");
-    calendarDiv.innerHTML = "";
-
-    // Update month-year label
+    const loadingIndicator = document.createElement("div");
+    loadingIndicator.className = "calendar-loading";
+    
+    // Preserve the existing calendar until new data is ready
+    const existingCalendar = calendarDiv.innerHTML;
+    
+    // Update month-year label immediately - this doesn't need to wait
     const monthYearLabel = document.getElementById("monthYearLabel");
     const monthNames = ["January", "February", "March", "April", "May", "June",
                         "July", "August", "September", "October", "November", "December"];
     monthYearLabel.textContent = monthNames[currentMonth] + " " + currentYear;
 
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    try {
+        // Fetch period logs and normalize stored dates
+        const res = await fetch("/api/periods");
+        const data = await res.json();
+        let periodDates = [];
+        if (data.logs) {
+            periodDates = data.logs.map(log => {
+                let storedDate = new Date(log.date);
+                return storedDate.toISOString().split("T")[0]; // Normalize to YYYY-MM-DD
+            });
+        }
 
-    // Fetch period logs and normalize stored dates
-    const res = await fetch("/api/periods");
-    const data = await res.json();
-    let periodDates = [];
-    if (data.logs) {
-        periodDates = data.logs.map(log => {
-            let storedDate = new Date(log.date);
-            return storedDate.toISOString().split("T")[0]; // Normalize to YYYY-MM-DD
+        // Calculate days in month
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        
+        // Calculate first day of month (0 = Sunday, 1 = Monday, etc.)
+        const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
+        
+        // Now clear and rebuild the calendar with the data ready
+        calendarDiv.innerHTML = "";
+        
+        // Add day headers (Sun, Mon, etc)
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        dayNames.forEach(day => {
+            const dayHeader = document.createElement("div");
+            dayHeader.className = "day-header";
+            dayHeader.textContent = day;
+            calendarDiv.appendChild(dayHeader);
         });
-    }
-
-    for (let day = 1; day <= daysInMonth; day++) {
-        const date = new Date(currentYear, currentMonth, day);
-        const normalizedDate = date.toISOString().split("T")[0]; // Ensure the format matches stored dates
-
-        const dayDiv = document.createElement("div");
-        dayDiv.textContent = day;
-
-        // Check if the normalized date matches any period log
-        if (periodDates.includes(normalizedDate)) {
-            dayDiv.classList.add("period-day");
+        
+        // Add empty cells for days before the first day of the month
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            const emptyDay = document.createElement("div");
+            emptyDay.className = "empty-day";
+            calendarDiv.appendChild(emptyDay);
         }
 
-        // Ovulation day: 14 days after period start
-        if (periodDates.some(d => {
-            let periodStart = new Date(d);
-            periodStart.setDate(periodStart.getDate() + 14);
-            return periodStart.toISOString().split("T")[0] === normalizedDate;
-        })) {
-            dayDiv.classList.add("ovulation-day");
-        }
+        // Add the days of the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(currentYear, currentMonth, day);
+            const normalizedDate = date.toISOString().split("T")[0];
 
-        // Fertility window: from period start +10 days to +16 days
-        if (periodDates.some(d => {
-            let fertilityStart = new Date(d);
-            fertilityStart.setDate(fertilityStart.getDate() + 10);
-            let fertilityEnd = new Date(d);
-            fertilityEnd.setDate(fertilityEnd.getDate() + 16);
-            return date >= fertilityStart && date <= fertilityEnd;
-        })) {
-            dayDiv.classList.add("fertility-day");
-        }
+            const dayDiv = document.createElement("div");
+            dayDiv.textContent = day;
+            dayDiv.classList.add("calendar-day");
 
-        calendarDiv.appendChild(dayDiv);
+            // Check if the normalized date matches any period log
+            if (periodDates.includes(normalizedDate)) {
+                dayDiv.classList.add("period-day");
+            }
+
+            // Ovulation day: 14 days after period start
+            if (periodDates.some(d => {
+                let periodStart = new Date(d);
+                periodStart.setDate(periodStart.getDate() + 14);
+                return periodStart.toISOString().split("T")[0] === normalizedDate;
+            })) {
+                dayDiv.classList.add("ovulation-day");
+            }
+
+            // Fertility window: from period start +10 days to +16 days
+            if (periodDates.some(d => {
+                let fertilityStart = new Date(d);
+                fertilityStart.setDate(fertilityStart.getDate() + 10);
+                let fertilityEnd = new Date(d);
+                fertilityEnd.setDate(fertilityEnd.getDate() + 16);
+                return date >= fertilityStart && date <= fertilityEnd;
+            })) {
+                dayDiv.classList.add("fertility-day");
+            }
+
+            calendarDiv.appendChild(dayDiv);
+        }
+    } catch (error) {
+        console.error("Error updating calendar:", error);
+        // Restore previous calendar if there's an error
+        calendarDiv.innerHTML = existingCalendar;
     }
 }
 
+// Use debounced month navigation to prevent rapid changes causing issues
+let monthChangeTimer = null;
+
 function prevMonth() {
+    if (monthChangeTimer) {
+        clearTimeout(monthChangeTimer);
+    }
+    
     if (currentMonth === 0) {
         currentMonth = 11;
         currentYear--;
     } else {
         currentMonth--;
     }
-    updateCalendar();
+    
+    // Apply a small delay before updating to handle rapid clicks
+    monthChangeTimer = setTimeout(() => {
+        updateCalendar();
+    }, 50);
 }
 
 function nextMonth() {
+    if (monthChangeTimer) {
+        clearTimeout(monthChangeTimer);
+    }
+    
     if (currentMonth === 11) {
         currentMonth = 0;
         currentYear++;
     } else {
         currentMonth++;
     }
-    updateCalendar();
+    
+    // Apply a small delay before updating to handle rapid clicks
+    monthChangeTimer = setTimeout(() => {
+        updateCalendar();
+    }, 50);
 }
