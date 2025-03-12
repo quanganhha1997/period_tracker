@@ -263,29 +263,55 @@ month-nav button:hover {
   overflow-x: auto;
 }
 
+/* Table Container */
+#patients-section {
+  margin: 20px auto;
+  padding: 20px;
+  max-width: 95%;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  overflow-x: auto;
+}
+
 /* Styled Table */
 #patients-table {
   width: 100%;
-  border-collapse: collapse;
-  margin-top: 0.938rem;
+  border-collapse: separate;
+  border-spacing: 0 10px;
+  margin-top: 15px;
+  border-radius: 10px;
+  overflow: hidden;
 }
 
 /* Table Headers */
-#patients-table th {
-  background: #e91e63;
+#patients-table thead {
+  background: linear-gradient(135deg, #e91e63, #ff80ab);
   color: white;
   font-weight: bold;
-  padding: 0.75rem;
-  border: 0.063rem solid #ed6785;
-  text-align: center;
 }
 
-/* Table Data */
-#patients-table td {
-  padding: 0.75rem;
-  border: 0.063rem solid #ed6785;
+#patients-table th {
+  padding: 14px;
   text-align: center;
-  font-size: 0.875rem;
+  font-size: 16px;
+  border-bottom: 3px solid #d81b60;
+  letter-spacing: 0.5px;
+}
+
+/* Table Body */
+#patients-table tbody {
+  background: white;
+}
+
+/* Table Data Cells */
+#patients-table td {
+  padding: 14px;
+  border-bottom: 1px solid #e91e63;
+  text-align: center;
+  font-size: 14px;
+  transition: background 0.3s ease;
 }
 
 /* Alternating Row Colors */
@@ -299,9 +325,49 @@ month-nav button:hover {
 
 /* Hover Effect */
 #patients-table tbody tr:hover {
-  background: #ffcdd2;
+  background: #ffe6ea;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
   transition: 0.3s ease-in-out;
 }
+
+/* Rounded Corners for the First and Last Cells */
+#patients-table tbody tr td:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+#patients-table tbody tr td:last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+/* Improve Readability */
+#patients-table td,
+#patients-table th {
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+/* Soft Shadow on Hover */
+#patients-table tbody tr:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 10px rgba(233, 30, 99, 0.3);
+}
+
+/* Add Scrollbar for Small Screens */
+@media screen and (max-width: 768px) {
+  #patients-section {
+    padding: 10px;
+  }
+
+  #patients-table {
+    font-size: 12px;
+  }
+
+  #patients-table th,
+  #patients-table td {
+    padding: 10px;
+  }
+}
+
 
 /* Legend Container */
 .legend-container {
